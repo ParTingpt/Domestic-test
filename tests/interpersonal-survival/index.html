@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>你的人际求生模式测试</title>
+  <style>
+    :root {
+      --bg: #f8f6fc;
+      --panel: #ffffff;
+      --text: #231a33;
+      --muted: #6f6782;
+      --line: #e6def3;
+      --soft: #f2ecfb;
+      --accent: #8b5cf6;
+      --accent2: #ec4899;
+      --shadow: 0 18px 48px rgba(139,92,246,.10);
+      --radius: 24px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      background: radial-gradient(circle at top left, rgba(139,92,246,.12), transparent 32%), linear-gradient(180deg,#fcfbff 0%,#f8f6fc 44%,#f4effb 100%);
+      color:var(--text); min-height:100vh;
+    }
+    .shell{max-width:900px;margin:0 auto;padding:18px 14px 44px}
+    .card{background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .back{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:14px;background:#fff;border:1px solid var(--line);color:var(--accent);font-weight:700;text-decoration:none}
+    .hero{padding:24px;position:relative;overflow:hidden}
+    .hero::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle, rgba(236,72,153,.14), rgba(236,72,153,0));pointer-events:none}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--soft);border:1px solid var(--line);color:var(--accent);font-size:12px;font-weight:700;margin-bottom:14px}
+    h1{margin:0;font-size:clamp(30px,7vw,46px);line-height:1.08;letter-spacing:-.03em}
+    .sub{margin-top:14px;color:var(--muted);line-height:1.9;font-size:15px}
+    .hero-tips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+    .pill{padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+    .screen{display:none}.screen.active{display:block}
+    .dock{position:sticky;top:10px;z-index:20;margin-top:16px;padding:16px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;background:rgba(252,251,255,.92);backdrop-filter:blur(10px)}
+    .progress{flex:1;min-width:220px;height:10px;background:#efe8fb;border-radius:999px;overflow:hidden}
+    .progress>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#8b5cf6,#ec4899);transition:width .2s ease}
+    .progress-text{font-size:13px;color:var(--muted);white-space:nowrap}
+    .test-wrap,.result-wrap,.loading-wrap{margin-top:16px;padding:20px}
+    .question-card{display:none;border:1px solid var(--line);border-radius:20px;padding:18px;background:linear-gradient(180deg,#fff,#fbf8ff)}
+    .question-card.active{display:block;animation:slideIn .26s ease}
+    .question-card.active-back{display:block;animation:slideBack .26s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes slideBack{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+    .qmeta{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;color:var(--muted);font-size:12px}
+    .badge{display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;background:var(--soft);border:1px solid var(--line);color:var(--accent);font-weight:700}
+    .qtitle{font-size:21px;line-height:1.75;white-space:pre-wrap}
+    .options{display:grid;gap:10px;margin-top:18px}
+    .option{display:flex;align-items:flex-start;gap:12px;padding:14px 14px;border-radius:16px;border:1px solid var(--line);background:#fff;transition:border-color .16s ease,background .16s ease,transform .16s ease;cursor:pointer}
+    .option:hover{background:#fdfbff;border-color:#cfbee9}
+    .option:active{transform:scale(.985)}
+    .option input{margin-top:4px;flex-shrink:0;accent-color:var(--accent)}
+    .option-code{min-width:22px;font-weight:800;color:var(--accent)}
+    .option-text{flex:1;line-height:1.85;word-break:break-word;overflow-wrap:anywhere}
+    .actions{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}
+    .btn{border:0;cursor:pointer;border-radius:14px;padding:13px 18px;font-weight:800;font:inherit;transition:transform .16s ease,opacity .16s ease}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .btn-primary{background:linear-gradient(100deg,#7c3aed,#8b5cf6 40%,#ec4899 100%);color:#fff;box-shadow:0 12px 28px rgba(139,92,246,.18)}
+    .btn-secondary{background:#fff;color:var(--accent);border:1px solid var(--line)}
+    .hint{font-size:13px;color:var(--muted);line-height:1.8}
+    .spinner{display:inline-block;width:44px;height:44px;border:4px solid #ece4f8;border-radius:50%;border-top-color:var(--accent);animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-wrap{text-align:center;padding:72px 20px}.loading-wrap h2{margin:22px 0 0;font-size:22px}.loading-wrap p{margin-top:10px;color:var(--muted);font-size:14px}
+    .type-box,.dim-box,.text-box{border:1px solid var(--line);border-radius:18px;padding:18px;background:linear-gradient(180deg,#fff,#fbf8ff)}
+    .result-wrap{display:grid;gap:16px}
+    .type-kicker{font-size:12px;color:var(--accent);font-weight:800;letter-spacing:.04em;margin-bottom:8px}
+    .type-name{font-size:clamp(32px,7vw,52px);line-height:1.06;letter-spacing:-.03em}
+    .type-sub{margin-top:10px;color:var(--muted);font-size:15px;line-height:1.85}
+    .match{margin-top:14px;display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 14px;background:var(--soft);border:1px solid var(--line);color:var(--accent);font-weight:800}
+    .dim-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .dim-item{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff}
+    .dim-item h3{margin:0 0 8px;font-size:16px}
+    .dim-item p{margin:0;color:var(--muted);font-size:14px;line-height:1.8}
+    .result-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .note{font-size:13px;color:var(--muted);line-height:1.85}
+    @media (max-width:720px){.dim-grid{grid-template-columns:1fr}.hero,.test-wrap,.result-wrap,.loading-wrap{padding:16px}.qtitle{font-size:18px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <a class="back" href="../../index.html">← 返回测试主页</a>
+    </div>
+
+    <section id="intro" class="screen active">
+      <div class="hero card">
+        <div class="eyebrow">娱乐向 · 关系风格测试</div>
+        <h1>《你的人际求生模式测试》</h1>
+        <p class="sub">
+          这套测试不测“理想中的你”，测的是你在关系开始紧张、情绪开始上头、场面开始微妙时，最容易自动开启的那套人际求生系统。
+          你是会主动开口抢修局面，还是先观察、先设防、先把自己撤回安全区？
+        </p>
+        <div class="hero-tips">
+          <span class="pill">24题</span>
+          <span class="pill">单题推进</span>
+          <span class="pill">8种关系求生模式</span>
+          <span class="pill">适合测完截图发朋友</span>
+        </div>
+        <div class="actions" style="margin-top:22px;">
+          <div class="hint">作答时选“关系一紧张时最像你的反应”，不要选你希望自己成为的版本。</div>
+          <button id="startBtn" class="btn btn-primary" type="button">开始测试</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="test" class="screen">
+      <div class="dock card">
+        <div class="progress"><span id="progressBar"></span></div>
+        <div class="progress-text" id="progressText">0 / 24</div>
+      </div>
+      <div class="test-wrap card">
+        <div id="questionList"></div>
+        <div class="actions">
+          <button id="backHomeBtn" class="btn btn-secondary" type="button">返回主页</button>
+          <button id="prevBtn" class="btn btn-secondary" type="button" hidden>上一题</button>
+          <div style="flex:1"></div>
+          <button id="nextBtn" class="btn btn-secondary" type="button" disabled>下一题</button>
+          <button id="submitBtn" class="btn btn-primary" type="button" style="display:none" disabled>查看结果</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="loading" class="screen">
+      <div class="loading-wrap card">
+        <div class="spinner"></div>
+        <h2>正在分析你的人际求生模式…</h2>
+        <p id="loadingText">读取关系压力反应中…</p>
+      </div>
+    </section>
+
+    <section id="result" class="screen">
+      <div class="result-wrap card">
+        <div class="type-box">
+          <div class="type-kicker">你的默认人际求生模式</div>
+          <div class="type-name" id="resultName">点火突围型</div>
+          <div class="match" id="resultMatch">匹配度 86%</div>
+          <div class="type-sub" id="resultSub">场面抢修员</div>
+        </div>
+        <div class="text-box">
+          <h3 style="margin:0 0 10px;font-size:18px;">结果解读</h3>
+          <p id="resultDesc" style="margin:0;color:var(--muted);line-height:1.95;font-size:15px"></p>
+        </div>
+        <div class="dim-box">
+          <h3 style="margin:0 0 12px;font-size:18px;">你的三条底层倾向</h3>
+          <div class="dim-grid">
+            <div class="dim-item"><h3>表达方式</h3><p id="dimExp"></p></div>
+            <div class="dim-item"><h3>关系策略</h3><p id="dimRel"></p></div>
+            <div class="dim-item"><h3>应对方式</h3><p id="dimCop"></p></div>
+          </div>
+        </div>
+        <div class="note">说明：本测试主要用于娱乐与自我观察，不替代专业心理评估。结果越像你，越说明你在关系压力之下的默认反应越稳定。</div>
+        <div class="result-actions">
+          <button id="restartBtn" class="btn btn-secondary" type="button">重新测试</button>
+          <a class="btn btn-primary" href="../../index.html" style="text-decoration:none">返回测试主页</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const questions = [
+      { id: 1, t: `群聊突然安静得像停尸房，你通常会：`, A: `立刻丢个梗，把场子救回来`, B: `先看两眼，等别人先动`, C: `默默潜水，心想这场子塌了也不是我塌的` },
+      { id: 2, t: `一个你在意的人回消息越来越慢，你脑子里第一集通常是：`, A: `他可能真的在忙，我再等等`, B: `行，有点不对劲，但我先不发作`, C: `好，关系警报器已经自己响了` },
+      { id: 3, t: `原本说好的安排突然全变了，你更像：`, A: `立刻改计划，今天这事必须继续转`, B: `先烦一下，再想怎么补救`, C: `先摆烂一会儿，等人魂回来再说` },
+      { id: 4, t: `别人把你的意思完全理解歪了，你通常会：`, A: `当场纠正，不然我能憋死`, B: `看值不值得解释，稍微补两句`, C: `算了，爱怎么想怎么想吧` },
+      { id: 5, t: `一个刚认识的人突然对你特别热情，你第一反应更像：`, A: `那我也可以自然接住这份热情`, B: `先聊着，边聊边看`, C: `热情来得太快，我先往后站一步` },
+      { id: 6, t: `有件事你知道迟早得谈开，但你一点都不想碰，你通常会：`, A: `咬咬牙约个时间，早点处理早点活`, B: `再拖一拖，等气氛没这么炸`, C: `先不谈，活人不碰高压线` },
+      { id: 7, t: `你说“没事”的时候，最接近哪种情况：`, A: `真有事我一般会讲，不太爱演`, B: `我有事，但我想看你会不会继续问`, C: `我已经有事了，但嘴巴这会儿关门了` },
+      { id: 8, t: `一段关系明显变冷时，你更容易：`, A: `主动问一句：你最近到底怎么了`, B: `先等等，看是错觉还是真凉了`, C: `既然你退了，那我也不追了` },
+      { id: 9, t: `事情一多，人一烦，待办清单像追债名单时，你通常会：`, A: `先开做，干掉一项是一项`, B: `先理一理顺序，再动手`, C: `先假装看不见，等它快炸了再说` },
+      { id: 10, t: `别人认真夸你时，你更像：`, A: `能接住，甚至还能回一句谢谢`, B: `表面笑笑，心里有点别扭`, C: `立刻转移话题，别再照我了我会想逃` },
+      { id: 11, t: `别人突然开始问你比较私人的事，你一般会：`, A: `愿意讲一点，正常交流嘛`, B: `看对方是谁，再决定开几道门`, C: `本能把门一锁，今天不开放参观` },
+      { id: 12, t: `一个你很想要的机会摆在面前，你通常会：`, A: `先冲，抢到再说`, B: `先看看局势，确认不会太狼狈`, C: `脑内已经把失败场景放完三遍了，人先退了` },
+      { id: 13, t: `你发朋友圈、动态这件事，更像：`, A: `我有感觉就发，不想憋着`, B: `挑着发，别太多，也别太空`, C: `尽量不发，活着就行，不用全网知道` },
+      { id: 14, t: `别人跟你道歉时，你更常见的反应是：`, A: `愿意继续沟通，看还能不能修`, B: `听你说完，再决定这页翻不翻`, C: `我知道你在道歉，但我的心门还没刷开` },
+      { id: 15, t: `现场突然尴尬得能抠出三室一厅时，你通常会：`, A: `出来接话，把场面往回拉`, B: `先观察，看有没有别人能救`, C: `我先降低存在感，别把聚光灯打我脸上` },
+      { id: 16, t: `你一旦委屈上头，通常是：`, A: `别人基本能看出来，我藏不住`, B: `我会努力正常，但语气可能开始不太对`, C: `越委屈越安静，像系统自动静音了` },
+      { id: 17, t: `有人想更深入地了解你，你更像：`, A: `可以啊，聊到哪算哪`, B: `慢慢来，别一下子扒太深`, C: `先保持安全距离，近了我会想后退` },
+      { id: 18, t: `麻烦突然砸下来时，你的默认模式通常是：`, A: `先处理，处理完再崩`, B: `先拉个人商量一下`, C: `先让我消失十分钟，不然脑子转不动` },
+      { id: 19, t: `你说“你开心就好”的时候，真实含义更接近：`, A: `我确实尊重你的决定`, B: `我有点不爽，但还没决定要不要展开`, C: `我已经不想讲了，你自己品吧` },
+      { id: 20, t: `别人来找你帮忙时，你大多会：`, A: `只要我能接住，就会接一下`, B: `先看关系、内容和我当天剩多少命`, C: `先判断这事会不会把我拖进坑里` },
+      { id: 21, t: `一件烂事拖了很久还没解决，你通常会：`, A: `忍不了，想尽快给它一个结局`, B: `再放一放，等更合适的时候`, C: `只要今天还没炸到我脚边，我先不碰` },
+      { id: 22, t: `你状态明显不对，别人问你“怎么了”，你通常会：`, A: `说一点真的，不然问了也白问`, B: `先说“没什么”，看你到底接不接得住`, C: `不说，今天这扇门不营业` },
+      { id: 23, t: `同一种关系问题你已经被伤过一次，这次再碰见类似苗头时，你通常会：`, A: `提前把需求和边界说清楚`, B: `先观察，不着急下判断`, C: `直接把防御系统提前开机` },
+      { id: 24, t: `吵完架后的第二天，你更像：`, A: `主动收尾，该谈谈，该和和`, B: `只要对方来，我就愿意接`, C: `先冷着，等我心里那股气自己散一点` }
+    ];
+
+    const groups = {
+      expression: { title: `表达方式`, ids: [1,4,7,10,13,16,19,22], high: `外露`, low: `内敛`, tie: 22 },
+      relation: { title: `关系策略`, ids: [2,5,8,11,14,17,20,23], high: `靠近`, low: `设防`, tie: 23 },
+      coping: { title: `应对方式`, ids: [3,6,9,12,15,18,21,24], high: `推进`, low: `回撤`, tie: 24 }
+    };
+
+    const types = {
+      "外露|靠近|推进": { name: `点火突围型`, sub: `场面抢修员`, desc: `关系一冷下来，你往往不是先退，而是先上。你不太信问题会自己好，也不太习惯靠沉默熬过去。你更像一个会主动开口、追问、补救、拉回局面的“抢修型选手”。优点是有行动力、能推进关系；风险是有时会在对方还没准备好的时候，把场面推得太快。` },
+      "外露|靠近|回撤": { name: `共振缓冲型`, sub: `氛围接球手`, desc: `你愿意靠近，也愿意回应，但比起硬闯，你更擅长在关系里接住情绪、缓冲张力。你不会轻易完全切断联系，可在真正高压时刻，也会选择先放慢一点、等气氛回温。你属于会照顾氛围的人，但有时也会把自己的委屈先往后压。` },
+      "外露|设防|推进": { name: `控场持盾型`, sub: `关系值班员`, desc: `你不是不行动，而是会一边行动、一边带着盾。你有表达力，也有推进问题的能力，但不会毫无保留地把自己交出去。你习惯边处理边观察，既想把局面稳住，也不允许自己彻底失守。你给人的感觉通常是强、稳、能扛，但内里其实一直在做边界管理。` },
+      "外露|设防|回撤": { name: `嘴硬撤离型`, sub: `炸毛撤退员`, desc: `你在不舒服时并不一定沉默，很多时候会先顶一句、先表态、先炸毛，但一旦真的感到危险或失望，就会快速把自己撤回去。你表面看上去像是在反击，实际上是自保系统启动得很快。你的优势是敏锐、反应快；难点是别人有时只看见你的刺，看不见你撤退背后的受伤。` },
+      "内敛|靠近|推进": { name: `静水修复型`, sub: `静音修补匠`, desc: `你不是高调的人，但在真正重要的关系里，你其实愿意修，也愿意往前做事。只是你的推进往往比较安静，不爱张扬，更像是默默处理、慢慢修复。你看起来温和克制，实际上比很多人都更愿意为关系付出行动。` },
+      "内敛|靠近|回撤": { name: `敏感蓄压型`, sub: `高压感应器`, desc: `你对关系很敏感，也很在意连接，但越在意，越容易先把感受压住。你会观察、会等待、会揣摩，也愿意保留关系，但不太会在第一时间把真实需求全说出来。你的温度不低，只是表达得慢，所以常常看起来比实际更冷静。` },
+      "内敛|设防|推进": { name: `冷静掌舵型`, sub: `边界操盘手`, desc: `你不喜欢情绪化地把自己摊开，但也不会完全逃避问题。你更像是安静地抓方向、抓重点、抓节奏的人。该处理的事你会处理，该守住的边界你也会守住。你常给人一种很稳的感觉，像是关系里的隐形掌舵者。` },
+      "内敛|设防|回撤": { name: `静默自保型`, sub: `安全壳住民`, desc: `你在人际压力面前最明显的本能，是先保护自己。你不会轻易失控，也不会轻易暴露，但当风险感上来时，会迅速收口、设防、后退。你不是没感觉，恰恰相反，你通常是感觉很多，只是更习惯把自己藏进安全壳里。` }
+    };
+
+    const screens = {
+      intro: document.getElementById('intro'),
+      test: document.getElementById('test'),
+      loading: document.getElementById('loading'),
+      result: document.getElementById('result')
+    };
+
+    const app = { answers: {}, currentIndex: 0, jumping: false };
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const questionList = document.getElementById('questionList');
+
+    function showScreen(name) {
+      Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderQuestions(direction = 'forward') {
+      questionList.innerHTML = '';
+      questions.forEach((q, index) => {
+        const card = document.createElement('article');
+        card.className = index === app.currentIndex ? `question-card ${direction === 'back' ? 'active-back' : 'active'}` : 'question-card';
+        card.innerHTML = `
+          <div class="qmeta">
+            <span class="badge">第 ${index + 1} 题</span>
+            <span>单题推进模式 · 选完自动下一题</span>
+          </div>
+          <div class="qtitle">${q.t}</div>
+          <div class="options">
+            ${['A','B','C'].map(code => `
+              <label class="option">
+                <input type="radio" name="q${q.id}" value="${code}" ${app.answers[q.id] === code ? 'checked' : ''} />
+                <div class="option-code">${code}</div>
+                <div class="option-text">${q[code]}</div>
+              </label>
+            `).join('')}
+          </div>
+        `;
+        questionList.appendChild(card);
+      });
+
+      questionList.querySelectorAll('input[type="radio"]').forEach(input => {
+        input.addEventListener('click', (e) => {
+          const id = Number(e.target.name.replace('q',''));
+          app.answers[id] = e.target.value;
+          updateProgress();
+          if (app.jumping) return;
+          app.jumping = true;
+          if (app.currentIndex < questions.length - 1) {
+            setTimeout(() => {
+              app.currentIndex += 1;
+              app.jumping = false;
+              renderQuestions('forward');
+            }, 220);
+          } else {
+            app.jumping = false;
+          }
+        });
+      });
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const done = Object.keys(app.answers).length;
+      const total = questions.length;
+      progressBar.style.width = `${(done / total) * 100}%`;
+      progressText.textContent = `${done} / ${total}`;
+      document.getElementById('prevBtn').hidden = app.currentIndex === 0;
+      const currentAnswered = !!app.answers[questions[app.currentIndex].id];
+      const nextBtn = document.getElementById('nextBtn');
+      const submitBtn = document.getElementById('submitBtn');
+      nextBtn.disabled = !currentAnswered;
+      if (app.currentIndex === total - 1) {
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'inline-flex';
+        submitBtn.disabled = done < total;
+      } else {
+        nextBtn.style.display = 'inline-flex';
+        submitBtn.style.display = 'none';
+      }
+    }
+
+    function classify(group) {
+      const scoreMap = { A: 2, B: 1, C: 0 };
+      const values = group.ids.map(id => scoreMap[app.answers[id]] ?? 0);
+      const score = values.reduce((a,b)=>a+b,0);
+      const choices = group.ids.map(id => app.answers[id]);
+      const countA = choices.filter(x => x === 'A').length;
+      const countC = choices.filter(x => x === 'C').length;
+      let label;
+      if (score >= 9) label = group.high;
+      else if (score <= 7) label = group.low;
+      else if (countA > countC) label = group.high;
+      else if (countC > countA) label = group.low;
+      else label = app.answers[group.tie] === 'C' ? group.low : group.high;
+      return { score, label };
+    }
+
+    function renderResult() {
+      const exp = classify(groups.expression);
+      const rel = classify(groups.relation);
+      const cop = classify(groups.coping);
+      const key = `${exp.label}|${rel.label}|${cop.label}`;
+      const result = types[key];
+      const similarity = 70 + Math.round(((Math.abs(exp.score - 8) + Math.abs(rel.score - 8) + Math.abs(cop.score - 8)) / 24) * 26);
+      document.getElementById('resultName').textContent = result.name;
+      document.getElementById('resultMatch').textContent = `匹配度 ${similarity}%`;
+      document.getElementById('resultSub').textContent = `${result.sub} · ${exp.label} / ${rel.label} / ${cop.label}`;
+      document.getElementById('resultDesc').textContent = result.desc;
+      document.getElementById('dimExp').textContent = `得分 ${exp.score}/16 · 判定 ${exp.label}`;
+      document.getElementById('dimRel').textContent = `得分 ${rel.score}/16 · 判定 ${rel.label}`;
+      document.getElementById('dimCop').textContent = `得分 ${cop.score}/16 · 判定 ${cop.label}`;
+      showScreen('result');
+    }
+
+    function startTest() {
+      app.answers = {};
+      app.currentIndex = 0;
+      renderQuestions();
+      showScreen('test');
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startTest);
+    document.getElementById('backHomeBtn').addEventListener('click', () => {
+      if (!Object.keys(app.answers).length || confirm('当前答题进度会丢失，确认返回主页吗？')) {
+        location.href = '../../index.html';
+      }
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (app.currentIndex > 0) { app.currentIndex -= 1; renderQuestions('back'); }
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (app.currentIndex < questions.length - 1) { app.currentIndex += 1; renderQuestions('forward'); }
+    });
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      showScreen('loading');
+      const logs = ['读取关系压力反应…', '定位默认自保策略…', '生成人际求生结果…'];
+      const text = document.getElementById('loadingText');
+      let i = 0;
+      const timer = setInterval(() => {
+        if (i < logs.length) text.textContent = logs[i++];
+        else { clearInterval(timer); renderResult(); }
+      }, 520);
+    });
+    document.getElementById('restartBtn').addEventListener('click', startTest);
+  </script>
+</body>
+</html>
