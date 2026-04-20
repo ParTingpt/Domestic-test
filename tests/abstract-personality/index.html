@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>《你的抽象人格浓度测试》</title>
+  <style>
+    :root {
+      --text: #231a33;
+      --muted: #6f6782;
+      --line: #e6def3;
+      --soft: #f4efff;
+      --accent: #8b5cf6;
+      --accent-2: #ec4899;
+      --shadow: 0 18px 48px rgba(139,92,246,.10);
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(139,92,246,.12), transparent 32%),
+        radial-gradient(circle at top right, rgba(236,72,153,.10), transparent 24%),
+        linear-gradient(180deg,#fcfbff 0%,#f8f5ff 44%,#f4effb 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .shell { max-width: 960px; margin: 0 auto; padding: 18px 14px 44px; }
+    .card { background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .back { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 14px; background: #fff; border: 1px solid var(--line); color: var(--accent); font-weight: 700; text-decoration: none; margin-bottom: 14px; }
+    .hero, .test-wrap, .loading-wrap, .result-wrap { padding: 20px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: var(--soft); border: 1px solid #e8dcff; color: var(--accent); font-size: 12px; font-weight: 700; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: clamp(30px, 7vw, 46px); line-height: 1.08; letter-spacing: -.03em; }
+    .sub { margin-top: 14px; color: var(--muted); line-height: 1.9; font-size: 15px; }
+    .hero-tips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .pill { padding: 8px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+    .actions { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+    .hint { font-size: 13px; color: var(--muted); line-height: 1.8; }
+    .btn { border: 0; cursor: pointer; border-radius: 14px; padding: 13px 18px; font-weight: 800; font: inherit; transition: transform .16s ease, opacity .16s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn-primary { background: linear-gradient(100deg,#7c3aed,#8b5cf6 36%,#ec4899 100%); color: #fff; box-shadow: 0 12px 28px rgba(139,92,246,.18); }
+    .btn-secondary { background: #fff; color: var(--accent); border: 1px solid var(--line); }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .dock { position: sticky; top: 10px; z-index: 20; margin-top: 16px; padding: 16px 18px; display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; background: rgba(252,249,255,.92); backdrop-filter: blur(10px); }
+    .progress { flex: 1; min-width: 220px; height: 10px; background: #efe7ff; border-radius: 999px; overflow: hidden; }
+    .progress > span { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#8b5cf6,#ec4899); transition: width .2s ease; }
+    .progress-text { font-size: 13px; color: var(--muted); white-space: nowrap; }
+    .question-card { display: none; border: 1px solid var(--line); border-radius: 20px; padding: 18px; background: linear-gradient(180deg,#fff,#fbf8ff); }
+    .question-card.active { display: block; }
+    .qmeta { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; color: var(--muted); font-size: 12px; }
+    .badge { display: inline-flex; align-items: center; padding: 7px 12px; border-radius: 999px; background: var(--soft); border: 1px solid #e8dcff; color: var(--accent); font-weight: 700; }
+    .qtitle { font-size: 20px; line-height: 1.75; }
+    .options { display: grid; gap: 10px; margin-top: 18px; }
+    .option { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+    .option:hover { background: #fcf9ff; border-color: #d8c8ff; }
+    .option input { margin-top: 4px; accent-color: var(--accent); }
+    .option-code { min-width: 22px; font-weight: 800; color: var(--accent); }
+    .option-text { flex: 1; line-height: 1.85; }
+    .spinner { display: inline-block; width: 44px; height: 44px; border: 4px solid #efe7ff; border-radius: 50%; border-top-color: var(--accent); animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-wrap { text-align: center; padding: 72px 20px; }
+    .loading-wrap h2 { margin: 22px 0 0; font-size: 22px; }
+    .loading-wrap p { margin-top: 10px; color: var(--muted); font-size: 14px; }
+    .result-wrap { display: grid; gap: 16px; }
+    .box { border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: linear-gradient(180deg,#fff,#fbf8ff); }
+    .photo-card { min-height: 260px; border-radius: 20px; border: 1px solid var(--line); background: linear-gradient(135deg,#f5efff 0%,#fff2fb 100%); display: grid; place-items: center; }
+    .avatar { width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(180deg,#fff,#faf4ff); border: 1px solid var(--line); font-size: 46px; margin: 0 auto 14px; }
+    .photo-name { font-size: clamp(28px,6vw,40px); font-weight: 800; letter-spacing: -.03em; text-align: center; }
+    .photo-note { font-size: 13px; color: var(--muted); text-align: center; margin-top: 10px; }
+    .score-chip {
+      margin: 14px auto 0;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: 999px;
+      background: rgba(255,255,255,.92); border: 1px solid var(--line);
+      color: var(--accent); font-size: 13px; font-weight: 800;
+    }
+    .box h3 { margin: 0 0 10px; font-size: 18px; }
+    .box p { margin: 0; color: var(--muted); line-height: 1.95; font-size: 15px; white-space: pre-wrap; }
+    .basic-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    .basic-item { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }
+    .basic-label { font-size: 12px; color: var(--accent-2); font-weight: 800; margin-bottom: 6px; }
+    .basic-value { color: var(--muted); line-height: 1.8; font-size: 14px; }
+    .note { font-size: 13px; color: var(--muted); line-height: 1.85; }
+    .result-actions { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    @media(max-width: 720px) {
+      .hero, .test-wrap, .loading-wrap, .result-wrap { padding: 16px; }
+      .qtitle { font-size: 18px; }
+      .basic-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <a class="back" href="../../index.html">← 返回测试主页</a>
+
+    <section id="intro" class="screen active">
+      <div class="hero card">
+        <div class="eyebrow">趣味人格测试 · 测测你到底有多抽象</div>
+        <h1>《你的抽象人格浓度测试》</h1>
+        <p class="sub">有些人说话像直线，有些人说话像拐弯的闪电；有些人活得像普通人，有些人随时都能冒出一句让全场沉默三秒的神级发言。这套测试测的不是你怪不怪，而是你的抽象人格到底浓到什么程度：是现实派，还是宇宙级意识流。</p>
+        <div class="hero-tips">
+          <span class="pill">12题</span>
+          <span class="pill">单题推进</span>
+          <span class="pill">结果页可截图</span>
+          <span class="pill">5种抽象浓度</span>
+        </div>
+        <div class="actions">
+          <div class="hint">请按第一反应作答，选那个最像你真实操作方式的答案。</div>
+          <button id="startBtn" class="btn btn-primary" type="button">开始测试</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="test" class="screen">
+      <div class="dock card">
+        <div class="progress"><span id="progressBar"></span></div>
+        <div class="progress-text" id="progressText">0 / 12</div>
+      </div>
+      <div class="test-wrap card">
+        <div id="questionList"></div>
+        <div class="actions">
+          <button id="backHomeBtn" class="btn btn-secondary" type="button">返回主页</button>
+          <button id="prevBtn" class="btn btn-secondary" type="button" hidden>上一题</button>
+          <div style="flex:1"></div>
+          <button id="nextBtn" class="btn btn-secondary" type="button" disabled>下一题</button>
+          <button id="submitBtn" class="btn btn-primary" type="button" style="display:none" disabled>查看结果</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="loading" class="screen">
+      <div class="loading-wrap card">
+        <div class="spinner"></div>
+        <h2>正在测算你的抽象浓度…</h2>
+        <p id="loadingText">读取你的奇妙脑回路中…</p>
+      </div>
+    </section>
+
+    <section id="result" class="screen">
+      <div class="result-wrap card">
+        <div class="box">
+          <div class="photo-card">
+            <div style="text-align:center">
+              <div class="avatar" id="avatarText">🧩</div>
+              <div class="photo-name" id="resultName">具象现实派</div>
+              <div class="score-chip">抽象人格浓度 <span id="scorePercent">18%</span></div>
+              <div class="photo-note">截个图，看看你的脑回路到底偏哪一挂。</div>
+            </div>
+          </div>
+        </div>
+        <div class="box">
+          <h3>类型简介</h3>
+          <p id="resultIntro"></p>
+        </div>
+        <div class="box">
+          <h3>你的结果参数</h3>
+          <div class="basic-grid" id="basicGrid"></div>
+        </div>
+        <div class="box">
+          <h3>结果解释</h3>
+          <p id="resultDesc"></p>
+        </div>
+        <div class="note">说明：本测试主要用于娱乐与自我观察。这里的“抽象人格”指表达方式、联想习惯、反应风格和社交气质上的趣味倾向，不代表专业人格诊断。</div>
+        <div class="result-actions">
+          <button id="restartBtn" class="btn btn-secondary" type="button">重新测试</button>
+          <a class="btn btn-primary" href="../../index.html" style="text-decoration:none">返回测试主页</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const questions = [
+      { t: '朋友认真跟你讲一件事时，你最常见的反应是：', options: ['先听重点，尽量正常回应。','脑子里会闪过一句奇怪比喻，但一般忍住不说。','会边听边自动生成一些离谱画面。','大概率会接一句让对方停顿两秒的话。','经常把一段正常对话发展成抽象现场。'] },
+      { t: '你发朋友圈或聊天动态时，更像：', options: ['写清楚内容就行。','偶尔会加一点别人看不太懂的梗。','喜欢发那种懂的人会爆笑、不懂的人会沉默的句子。','经常让朋友来问“你到底什么意思”。','你自己都不确定那条动态是人类还是电波在说话。'] },
+      { t: '别人说“你这人有点抽象”时，你通常：', options: ['会否认，我觉得自己挺正常。','表面否认，心里知道确实有一点。','会笑，因为被看出来了。','会立刻再补一句更抽象的。','会把“抽象”当成一种个人风格认证。'] },
+      { t: '当场面有点尴尬时，你更可能：', options: ['正常把话题拉回来。','小范围开个玩笑缓冲一下。','突然冒出一句奇怪但有效的话。','靠离谱发言把全场从尴尬拖进另一个宇宙。','你本身就是尴尬场面转化器，越尴尬越容易出神句。'] },
+      { t: '你看到一个普通物品时，脑子里最容易发生的是：', options: ['就是个普通物品。','偶尔会联想到别的东西。','会自动给它配上奇怪剧情。','很容易给它拟人化或赋予奇妙设定。','任何东西到你这儿都能发展成一套抽象世界观。'] },
+      { t: '别人给你发“在吗”时，你内心的弹幕更像：', options: ['在，怎么了。','又来了，先看看他要干嘛。','感觉像系统弹出未知副本入口。','脑内已经开始上演完整前情提要。','你会觉得这两个字自带一种神秘的末日感。'] },
+      { t: '你和熟人聊天时最常出现的情况是：', options: ['内容都比较正常。','偶尔会说出一两句怪话。','越熟越容易胡言乱语。','熟人已经能自动翻译你的抽象语言。','你们的聊天记录发给外人看，像某种加密文件。'] },
+      { t: '如果要形容自己的一天，你更可能说：', options: ['今天挺普通。','今天有点乱。','今天像被拎进了错误副本。','今天像灵魂坐错了车。','今天整个人像一个被生活随手调参数的实验体。'] },
+      { t: '你在群聊里属于哪一类？', options: ['信息接收者。','偶尔接梗的人。','时不时丢一句神来之笔。','群聊气氛一旦塌了就靠你出手。','你常常不是在发言，而是在投放精神污染级文本。'] },
+      { t: '别人不理解你说的话时，你更可能：', options: ['立刻重新解释清楚。','会简单补一句说明。','解释到一半自己先笑了。','懒得解释，懂的人自然会懂。','甚至会顺势说得更抽象，让局面彻底失控。'] },
+      { t: '你对“抽象”这件事的态度更接近：', options: ['能不用就不用。','偶尔点到为止挺有趣。','适量抽象是生活调味剂。','没点抽象感，聊天都没灵魂。','抽象不是风格，是你的基础运行系统。'] },
+      { t: '下面哪句话最像你？', options: ['我其实是个正常人。','我偶尔会语出惊人，但总体可控。','我脑回路确实有点偏。','我不是故意抽象，我只是思路比较野。','我已经接受自己本质上是个行走的离谱频道。'] }
+    ];
+
+    const resultBands = [
+      {
+        min: 12, max: 20, name: '具象现实派', emoji: '🧩',
+        intro: '你的抽象人格浓度偏低，整体是清晰、务实、好理解的现实派。',
+        core: '逻辑稳定在线',
+        action: '先听重点，再给回应',
+        risk: '容易被高浓度抽象选手绕晕',
+        quote: '等一下，你先把重点讲清楚。',
+        advice: '偶尔放一点跳脱表达，会让你更有记忆点。',
+        desc: '你的抽象人格浓度不高。大多数时候，你更习惯把事情讲明白、把逻辑捋顺、把重点对齐，而不是靠奇怪比喻和意识流跳跃制造效果。\n\n你在一群脑回路乱飞的人里，通常像那个负责把频道重新调回地球的人。别人一句话能拐出八个平行宇宙，你更想知道：所以这件事到底想说什么？\n\n你的优势在于稳定、可靠、易沟通。你的挑战是，有时会对高浓度抽象选手的表达方式感到迷惑。对你来说，抽象更像调味，不是主食。'
+      },
+      {
+        min: 21, max: 30, name: '轻度跳脱型', emoji: '✨',
+        intro: '你有一点抽象，但整体还在正常频道里，属于可控范围内的特别。',
+        core: '稳定里带点跳脱',
+        action: '偶尔冒出神来一句',
+        risk: '一本正经地把别人整沉默',
+        quote: '我觉得我很正常，只是偶尔说得比较妙。',
+        advice: '这种“突然一下”的抽象感很有杀伤力，保留它。',
+        desc: '你属于那种平时看着挺正常，但偶尔会冒出一句让人停顿两秒的话的人。你不是持续性抽象，而是会在合适的时候，突然释放一点很有味道的脑回路。\n\n你擅长在现实和跳脱之间反复横跳。需要认真时你很正常，气氛一到你也能立刻切换成隐藏梗王。别人会觉得你“有点特别”，但还没有到完全听不懂的程度。\n\n你的魅力在于反差感。不是一直怪，而是偶尔来一下，反而更有效。'
+      },
+      {
+        min: 31, max: 40, name: '意识流常驻型', emoji: '☁️',
+        intro: '你的脑回路已经开始偏离直线，习惯用画面、感觉和联想去理解与表达。',
+        core: '意识流开始常驻',
+        action: '日常自带比喻和画面感',
+        risk: '别人需要一点时间加载你',
+        quote: '我不是在乱说，我是在描述一种感觉。',
+        advice: '你这种表达很有味道，关键场合记得补一句“翻译成人话就是”。',
+        desc: '你的抽象浓度已经明显在线。你不是为了故意搞怪才这样说话，而是你确实会自然地用非常规方式去理解和表达很多事情。\n\n你很容易把普通情绪讲成一种天气，把普通状态讲成一个副本，把普通事件讲成一段奇妙叙事。对你来说，世界不是只有“发生了什么”，还有“这件事给人的感觉像什么”。\n\n这让你的表达很有画面，也很容易让熟人记住你。但副作用是，在不熟的人那里，你有时会显得频道没对上。'
+      },
+      {
+        min: 41, max: 50, name: '高浓度抽象体', emoji: '🌀',
+        intro: '你的抽象人格浓度已经很高，表达系统、联想系统和气场系统都自带抽象滤镜。',
+        core: '抽象表达高频运行',
+        action: '普通话题自动长出第二层含义',
+        risk: '聊天记录容易脱离人类语境',
+        quote: '重点不在事情本身，而在它的精神形状。',
+        advice: '你的风格辨识度很强，熟人局会非常吃这一套。',
+        desc: '你已经不只是“会讲几句怪话”，而是整个人的表达习惯都带着明显的抽象滤镜。很多别人觉得普通的事情，到了你这里，都会自动长出第二层、第三层，甚至隐藏剧情。\n\n你懂得用比喻、错位、气氛感和脑内画面去组织语言，所以你的话常常不是平的，而是带纹理、带后劲、带回味的。懂你的人会觉得你特别有味道，不懂你的人则会觉得你像在打加密电报。\n\n你的最大优势是辨识度极高。你的最大挑战，是不是所有人都能直接跟上你的频道。'
+      },
+      {
+        min: 51, max: 60, name: '宇宙级抽象生命体', emoji: '👁️‍🗨️',
+        intro: '你的抽象人格不是偶尔上线，而是全天候运行。你本人就是一种难以被准确定义的气场现象。',
+        core: '抽象即默认系统',
+        action: '随手一句都可能成为年度名言',
+        risk: '第一次认识你的人需要完整加载包',
+        quote: '我没有偏离现实，我只是现实对我来说角度比较多。',
+        advice: '请继续做你自己，只是在正式场合记得提前切回地球语音包。',
+        desc: '你的抽象人格浓度已经来到满格区域。你不是偶尔抽象，而是持续性、自发性、沉浸式抽象。你的大脑像一台二十四小时运转的联想装置，任何普通场景都可能被你理解成更有气味、更有隐喻、更有精神画面的东西。\n\n你自己通常非常懂自己，但别人听完可能需要加载。你觉得已经说得够直白了，对方却还要问一句：所以你的意思是？\n\n但这也说明你极有风格。你不是随机怪，而是形成了一套完整的抽象系统。你很容易成为朋友圈里最值得截图保存的那个人。'
+      }
+    ];
+
+    const screens = {
+      intro: document.getElementById('intro'),
+      test: document.getElementById('test'),
+      loading: document.getElementById('loading'),
+      result: document.getElementById('result')
+    };
+
+    const app = { answers: {}, index: 0 };
+    const qList = document.getElementById('questionList');
+    const pBar = document.getElementById('progressBar');
+    const pText = document.getElementById('progressText');
+
+    function show(name) {
+      Object.entries(screens).forEach(([k, v]) => v.classList.toggle('active', k === name));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderQuestions() {
+      qList.innerHTML = '';
+      questions.forEach((q, idx) => {
+        const el = document.createElement('article');
+        el.className = idx === app.index ? 'question-card active' : 'question-card';
+        el.innerHTML = `
+          <div class="qmeta">
+            <span class="badge">第 ${idx + 1} 题</span>
+            <span>共 ${questions.length} 题</span>
+          </div>
+          <div class="qtitle">${q.t}</div>
+          <div class="options">
+            ${q.options.map((o, j) => `
+              <label class="option">
+                <input type="radio" name="q${idx}" value="${j}" ${String(app.answers[idx]) === String(j) ? 'checked' : ''} />
+                <div class="option-code">${String.fromCharCode(65 + j)}</div>
+                <div class="option-text">${o}</div>
+              </label>
+            `).join('')}
+          </div>
+        `;
+        qList.appendChild(el);
+      });
+      qList.querySelectorAll('input').forEach(input => input.addEventListener('click', e => {
+        app.answers[Number(e.target.name.slice(1))] = Number(e.target.value);
+        updateProgress();
+        if (app.index < questions.length - 1) {
+          setTimeout(() => { app.index += 1; renderQuestions(); }, 220);
+        }
+      }));
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const done = Object.keys(app.answers).length;
+      const total = questions.length;
+      pBar.style.width = `${done / total * 100}%`;
+      pText.textContent = `${done} / ${total}`;
+      document.getElementById('prevBtn').hidden = app.index === 0;
+      const answered = app.answers[app.index] !== undefined;
+      const next = document.getElementById('nextBtn');
+      const submit = document.getElementById('submitBtn');
+      next.disabled = !answered;
+      if (app.index === total - 1) {
+        next.style.display = 'none';
+        submit.style.display = 'inline-flex';
+        submit.disabled = done < total;
+      } else {
+        next.style.display = 'inline-flex';
+        submit.style.display = 'none';
+      }
+    }
+
+    function calcScore() {
+      return questions.reduce((sum, _, idx) => sum + ((app.answers[idx] ?? 0) + 1), 0);
+    }
+
+    function calcPercent(score) {
+      return Math.round(((score - questions.length) / (questions.length * 4)) * 100);
+    }
+
+    function getBand(score) {
+      return resultBands.find(item => score >= item.min && score <= item.max) || resultBands[resultBands.length - 1];
+    }
+
+    function renderBasics(result, percent) {
+      const grid = document.getElementById('basicGrid');
+      const basics = {
+        '抽象浓度': `${percent}%`,
+        '当前状态': result.core,
+        '常见操作': result.action,
+        '高危现场': result.risk,
+        '人格台词': result.quote,
+        '友情提示': result.advice
+      };
+      grid.innerHTML = Object.entries(basics).map(([label, value]) => `
+        <div class="basic-item">
+          <div class="basic-label">${label}</div>
+          <div class="basic-value">${value}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderResult() {
+      const score = calcScore();
+      const percent = calcPercent(score);
+      const result = getBand(score);
+      document.getElementById('resultName').textContent = result.name;
+      document.getElementById('avatarText').textContent = result.emoji;
+      document.getElementById('scorePercent').textContent = `${percent}%`;
+      document.getElementById('resultIntro').textContent = result.intro;
+      document.getElementById('resultDesc').textContent = result.desc;
+      renderBasics(result, percent);
+      show('result');
+    }
+
+    function startTest() {
+      app.answers = {};
+      app.index = 0;
+      renderQuestions();
+      show('test');
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startTest);
+    document.getElementById('backHomeBtn').addEventListener('click', () => {
+      if (!Object.keys(app.answers).length || confirm('返回主页后，本次作答不会保留，确认返回吗？')) location.href = '../../index.html';
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (app.index > 0) { app.index -= 1; renderQuestions(); }
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (app.index < questions.length - 1) { app.index += 1; renderQuestions(); }
+    });
+    document.getElementById('submitBtn').addEventListener('click', () => {
+      show('loading');
+      const logs = ['读取你的奇妙脑回路中…', '测算你的抽象表达频率中…', '生成你的离谱结果页中…'];
+      const text = document.getElementById('loadingText');
+      let i = 0;
+      const timer = setInterval(() => {
+        if (i < logs.length) text.textContent = logs[i++];
+        else { clearInterval(timer); renderResult(); }
+      }, 560);
+    });
+    document.getElementById('restartBtn').addEventListener('click', startTest);
+  </script>
+</body>
+</html>
