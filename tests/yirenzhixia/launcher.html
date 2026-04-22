@@ -50,7 +50,7 @@
       position: fixed;
       right: 20px;
       bottom: 20px;
-      display: none;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
@@ -65,10 +65,7 @@
       cursor: pointer;
       box-shadow: 0 14px 30px rgba(17, 24, 39, 0.28);
       z-index: 9998;
-    }
-
-    #shareBtn.show {
-      display: inline-flex;
+      opacity: 0.95;
     }
 
     #shareBtn:active {
@@ -103,9 +100,7 @@
     const shareBtn = document.getElementById('shareBtn');
 
     let iframeDoc = null;
-    let observer = null;
     let toastTimer = null;
-    let pollTimer = null;
 
     function showToast(message) {
       toast.textContent = message;
@@ -217,30 +212,6 @@
       }
     }
 
-    function resultIsVisible() {
-      if (!iframeDoc || !iframeDoc.body) return false;
-
-      const obviousResultNode = Array.from(
-        iframeDoc.querySelectorAll('#result, .result, .result-page, .result-card, .result-container, .final-result, .outcome, .share-section')
-      ).find(isVisible);
-      if (obviousResultNode) return true;
-
-      const visibleButtonsText = Array.from(iframeDoc.querySelectorAll('button, a, .btn, [role="button"]'))
-        .filter(isVisible)
-        .map(getText)
-        .join(' ');
-
-      const bodyText = getText(iframeDoc.body).slice(0, 2500);
-      const hasResultHint = /测试结果|你的结果|你最像|你的角色|角色画像|匹配角色|本次结果/.test(bodyText);
-      const hasEndAction = /再测一次|重新测试|重新开始|返回首页|回到首页/.test(visibleButtonsText + ' ' + bodyText);
-
-      return hasResultHint && hasEndAction;
-    }
-
-    function updateShareButton() {
-      shareBtn.classList.toggle('show', resultIsVisible());
-    }
-
     async function sharePage() {
       const shareData = {
         title: iframeDoc && iframeDoc.title ? iframeDoc.title : '一人之下角色测试',
@@ -278,27 +249,6 @@
 
       document.title = iframeDoc.title || '一人之下角色测试';
       iframeDoc.addEventListener('click', handleClick, true);
-
-      if (observer) {
-        observer.disconnect();
-      }
-      if (pollTimer) {
-        clearInterval(pollTimer);
-      }
-
-      observer = new MutationObserver(() => {
-        updateShareButton();
-      });
-
-      observer.observe(iframeDoc.body || iframeDoc.documentElement, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class', 'style']
-      });
-
-      pollTimer = setInterval(updateShareButton, 800);
-      updateShareButton();
     }
 
     shareBtn.addEventListener('click', sharePage);
