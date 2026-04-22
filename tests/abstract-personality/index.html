@@ -85,6 +85,7 @@
     .basic-value { color: var(--muted); line-height: 1.8; font-size: 14px; }
     .note { font-size: 13px; color: var(--muted); line-height: 1.85; }
     .result-actions { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .answer-warning { flex-basis: 100%; font-size: 13px; color: #e11d48; font-weight: 800; line-height: 1.7; }
     @media(max-width: 720px) {
       .hero, .test-wrap, .loading-wrap, .result-wrap { padding: 16px; }
       .qtitle { font-size: 18px; }
@@ -125,8 +126,9 @@
           <button id="backHomeBtn" class="btn btn-secondary" type="button">返回主页</button>
           <button id="prevBtn" class="btn btn-secondary" type="button" hidden>上一题</button>
           <div style="flex:1"></div>
-          <button id="nextBtn" class="btn btn-secondary" type="button" disabled>下一题</button>
-          <button id="submitBtn" class="btn btn-primary" type="button" style="display:none" disabled>查看结果</button>
+          <div id="answerWarning" class="answer-warning" hidden>请先选择一个答案，再进入下一题。</div>
+          <button id="nextBtn" class="btn btn-secondary" type="button">下一题</button>
+          <button id="submitBtn" class="btn btn-primary" type="button" style="display:none">查看结果</button>
         </div>
       </div>
     </section>
@@ -166,6 +168,7 @@
         <div class="note">说明：本测试主要用于娱乐与自我观察。这里的“抽象人格”指表达方式、联想习惯、反应风格和社交气质上的趣味倾向，不代表专业人格诊断。</div>
         <div class="result-actions">
           <button id="restartBtn" class="btn btn-secondary" type="button">重新测试</button>
+          <button id="shareBtn" class="btn btn-secondary" type="button">分享给朋友</button>
           <a class="btn btn-primary" href="../../index.html" style="text-decoration:none">返回测试主页</a>
         </div>
       </div>
@@ -252,13 +255,19 @@
     const qList = document.getElementById('questionList');
     const pBar = document.getElementById('progressBar');
     const pText = document.getElementById('progressText');
+    const answerWarning = document.getElementById('answerWarning');
 
     function show(name) {
       Object.entries(screens).forEach(([k, v]) => v.classList.toggle('active', k === name));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    function setAnswerWarning(showWarning, message = '请先选择一个答案，再进入下一题。') {
+      answerWarning.textContent = message;
+      answerWarning.hidden = !showWarning;
+    }
 
     function renderQuestions() {
+      setAnswerWarning(false);
       qList.innerHTML = '';
       questions.forEach((q, idx) => {
         const el = document.createElement('article');
@@ -283,6 +292,7 @@
       });
       qList.querySelectorAll('input').forEach(input => input.addEventListener('click', e => {
         app.answers[Number(e.target.name.slice(1))] = Number(e.target.value);
+        setAnswerWarning(false);
         updateProgress();
         if (app.index < questions.length - 1) {
           setTimeout(() => { app.index += 1; renderQuestions(); }, 220);
@@ -297,14 +307,11 @@
       pBar.style.width = `${done / total * 100}%`;
       pText.textContent = `${done} / ${total}`;
       document.getElementById('prevBtn').hidden = app.index === 0;
-      const answered = app.answers[app.index] !== undefined;
       const next = document.getElementById('nextBtn');
       const submit = document.getElementById('submitBtn');
-      next.disabled = !answered;
       if (app.index === total - 1) {
         next.style.display = 'none';
         submit.style.display = 'inline-flex';
-        submit.disabled = done < total;
       } else {
         next.style.display = 'inline-flex';
         submit.style.display = 'none';
@@ -351,7 +358,20 @@
       document.getElementById('resultIntro').textContent = result.intro;
       document.getElementById('resultDesc').textContent = result.desc;
       renderBasics(result, percent);
+      document.getElementById('shareBtn').dataset.result = result.name;
       show('result');
+    }
+
+    async function shareResult() {
+      const winner = document.getElementById('shareBtn').dataset.result || '抽象人格浓度';
+      const shareTitle = `我测出了${winner}｜你的抽象人格浓度测试`;
+      const shareText = `我在《你的抽象人格浓度测试》里测出了${winner}，快来看看你的抽象人格浓度。`;
+      const shareUrl = window.location.href;
+      try {
+        if (navigator.share) { await navigator.share({ title: shareTitle, text: shareText, url: shareUrl }); return; }
+        if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(`${shareTitle}\n${shareText}\n${shareUrl}`); alert('结果链接已复制，快去分享给朋友吧～'); return; }
+      } catch (error) { if (error?.name === 'AbortError') return; }
+      window.prompt('复制下面的链接分享给朋友：', shareUrl);
     }
 
     function startTest() {
@@ -366,12 +386,18 @@
       if (!Object.keys(app.answers).length || confirm('返回主页后，本次作答不会保留，确认返回吗？')) location.href = '../../index.html';
     });
     document.getElementById('prevBtn').addEventListener('click', () => {
+      setAnswerWarning(false);
       if (app.index > 0) { app.index -= 1; renderQuestions(); }
     });
     document.getElementById('nextBtn').addEventListener('click', () => {
-      if (app.index < questions.length - 1) { app.index += 1; renderQuestions(); }
+      if (app.answers[app.index] === undefined) { setAnswerWarning(true); return; }
+      if (app.index < questions.length - 1) { setAnswerWarning(false); app.index += 1; renderQuestions(); }
     });
     document.getElementById('submitBtn').addEventListener('click', () => {
+      if (app.answers[app.index] === undefined || Object.keys(app.answers).length < questions.length) {
+        setAnswerWarning(true, '请先完成当前题目，全部作答后再查看结果。');
+        return;
+      }
       show('loading');
       const logs = ['读取你的奇妙脑回路中…', '测算你的抽象表达频率中…', '生成你的离谱结果页中…'];
       const text = document.getElementById('loadingText');
@@ -382,6 +408,7 @@
       }, 560);
     });
     document.getElementById('restartBtn').addEventListener('click', startTest);
+    document.getElementById('shareBtn').addEventListener('click', shareResult);
   </script>
 </body>
 </html>
