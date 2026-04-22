@@ -63,6 +63,7 @@ h1 {margin:0;font-size:clamp(30px,7vw,46px);line-height:1.08;letter-spacing:-.03
 .basic-value {color:var(--muted);line-height:1.8;font-size:14px;}
 .note {font-size:13px;color:var(--muted);line-height:1.85;}
 .result-actions {display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.answer-warning {flex-basis:100%;font-size:13px;color:#e11d48;font-weight:800;line-height:1.7;}
 .preview-badge {display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);color:#d946ef;font-size:12px;font-weight:800;margin-top:12px;}
 @media(max-width:820px) { .result-grid {grid-template-columns:1fr;} }
 @media(max-width:720px) { .hero,.test-wrap,.loading-wrap,.result-wrap {padding:16px;} .qtitle {font-size:18px;} .basic-grid {grid-template-columns:1fr;} }
@@ -96,8 +97,9 @@ h1 {margin:0;font-size:clamp(30px,7vw,46px);line-height:1.08;letter-spacing:-.03
         <button id="backHomeBtn" class="btn btn-secondary" type="button">返回主页</button>
         <button id="prevBtn" class="btn btn-secondary" type="button" hidden>上一题</button>
         <div style="flex:1"></div>
-        <button id="nextBtn" class="btn btn-secondary" type="button" disabled>下一题</button>
-        <button id="submitBtn" class="btn btn-primary" type="button" style="display:none" disabled>查看结果</button>
+        <div id="answerWarning" class="answer-warning" hidden>请先选择一个答案，再进入下一题。</div>
+        <button id="nextBtn" class="btn btn-secondary" type="button">下一题</button>
+        <button id="submitBtn" class="btn btn-primary" type="button" style="display:none">查看结果</button>
       </div>
     </div>
   </section>
@@ -117,6 +119,7 @@ h1 {margin:0;font-size:clamp(30px,7vw,46px);line-height:1.08;letter-spacing:-.03
       <div class="note">说明：本测试主要用于娱乐与自我观察，不替代专业心理评估。当前页面使用的是前端生成的动物图卡素材，优先保证排版、移动端适配与结果展示效果；后续如果你要换成正式图片，只需要替换图片生成函数或图片地址即可。</div>
       <div class="result-actions">
         <button id="restartBtn" class="btn btn-secondary" type="button">重新测试</button>
+        <button id="shareBtn" class="btn btn-secondary" type="button">分享给朋友</button>
         <a class="btn btn-primary" href="../../index.html" style="text-decoration:none">返回测试主页</a>
       </div>
     </div>
@@ -155,88 +158,67 @@ const resultMap = {
 
 const results = {
   '金毛犬': {
-    tag: '热烈陪伴',
-    emoji: '🐕',
-    theme: ['#f59e0b', '#ec4899'],
+    tag: '热烈陪伴', emoji: '🐕', theme: ['#f59e0b', '#ec4899'],
     intro: '金毛犬给人的感觉通常是热情、真诚、陪伴感很强。它不一定是最复杂的动物，但往往是最容易让人放松、让人觉得“和它待在一起很舒服”的存在。',
     basics: { '社交模式': '主动连接、自然热场', '情绪处理': '先接住感受再处理问题', '行动策略': '喜欢先迈出第一步', '代表氛围': '热烈、真诚、有陪伴感' },
     desc: '你像金毛犬的地方，在于你很愿意把善意直接给出去。很多时候，别人还在试探气氛，你已经开始让场子暖起来了。你对关系通常比较真，也比较直，不太喜欢把喜欢、关心和支持藏得太深。\n\n你的吸引力在于温度感。别人容易在你身上感受到回应、热情和被接纳的感觉。不过你也容易因为太愿意照顾别人、太重感情，而让自己不知不觉承担太多。'
   },
   '海豚': {
-    tag: '高情商社交',
-    emoji: '🐬',
-    theme: ['#06b6d4', '#8b5cf6'],
+    tag: '高情商社交', emoji: '🐬', theme: ['#06b6d4', '#8b5cf6'],
     intro: '海豚是那种很会读空气、很会连接别人，也很会在流动的人际关系里找到自己位置的动物。它不一定最吵，但往往最会让关系顺起来。',
     basics: { '社交模式': '自然融入、很会连接', '情绪处理': '能感受到别人没说出口的部分', '行动策略': '更倾向先观察再推进', '代表氛围': '柔软、灵活、会读空气' },
     desc: '你像海豚的地方，在于你通常知道什么时候该热闹，什么时候该放轻，什么时候一句温柔的话比一堆大道理更有用。你的人际天赋，不一定表现为“社牛”，而是表现为让人感觉舒服、有参与感、容易被理解。\n\n你很擅长连接，也很容易成为别人情绪上的缓冲垫。你的高光点是温柔和灵活，但也要小心，别总把别人的情绪接得太满。'
   },
   '狐狸': {
-    tag: '机敏掌控',
-    emoji: '🦊',
-    theme: ['#f97316', '#8b5cf6'],
+    tag: '机敏掌控', emoji: '🦊', theme: ['#f97316', '#8b5cf6'],
     intro: '狐狸通常给人的印象是聪明、反应快、会看局面。它不是乱冲，而是能在复杂环境里快速判断什么最值得做、什么最该避开。',
     basics: { '社交模式': '外向但不盲目投入', '情绪处理': '先判断、先分析', '行动策略': '看准了就出手', '代表氛围': '清醒、机灵、很会拿节奏' },
     desc: '你像狐狸的地方，在于你很少只是被动应付世界。你通常会看局势、抓机会，也很懂得怎么用更聪明的方式达成目的。别人眼里，你很可能是那种“脑子转得快，而且不是白转”的人。\n\n你的魅力在于清醒和效率。你不一定最热情，但你往往是最会判断的人。不过你也容易被误解成太会了、太精了，好像心里总有第二层盘算。'
   },
   '狐獴': {
-    tag: '清醒雷达',
-    emoji: '🦡',
-    theme: ['#a855f7', '#f59e0b'],
+    tag: '清醒雷达', emoji: '🦡', theme: ['#a855f7', '#f59e0b'],
     intro: '狐獴很像人群里的小雷达，看着能融入，也很会观察。它的特点不是张扬，而是警觉、清醒，能快速觉察环境中的变化和风险。',
     basics: { '社交模式': '能社交，但不会立刻交底', '情绪处理': '更看信息和走向', '行动策略': '谨慎观察、再做决定', '代表氛围': '清醒、机警、有边界' },
     desc: '你像狐獴的地方，在于你很少会毫无保留地冲进一个场子里。你可以正常社交，也可以聊得来，但你通常会保留一点观察距离。你擅长一边参与，一边判断这个环境值不值得你更认真地投入。\n\n你最大的优势是清醒感。别人可能被热闹带走，但你还能注意到细节、动机和潜在风险。这让你很稳，也让你显得不那么容易被拿捏。'
   },
   '白狼': {
-    tag: '沉默护短',
-    emoji: '🐺',
-    theme: ['#475569', '#8b5cf6'],
+    tag: '沉默护短', emoji: '🐺', theme: ['#475569', '#8b5cf6'],
     intro: '白狼通常带着一种安静但不弱的气质。它不靠热闹获得存在感，但一旦认定方向、认定人，就会表现出很强的行动力和保护欲。',
     basics: { '社交模式': '慢热但关系很深', '情绪处理': '感受很深，但不轻易全说出来', '行动策略': '关键时刻会主动顶上', '代表氛围': '安静、有力量、很护短' },
     desc: '你像白狼的地方，在于你并不是那种到处散发热情的人，但你对关系很认真。你更在意深度、在意信任、在意“关键时候站不站人”。只要你把谁放进自己的圈子，那个偏爱通常是很明显的。\n\n你的力量感很特别，表面可能安静，实际上很能扛。你最大的魅力不是会说，而是会在真正需要的时候出现。'
   },
   '兔子': {
-    tag: '细腻安全感',
-    emoji: '🐇',
-    theme: ['#ec4899', '#f9a8d4'],
+    tag: '细腻安全感', emoji: '🐇', theme: ['#ec4899', '#f9a8d4'],
     intro: '兔子的特点不是弱，而是细。它对环境很敏感，对人的情绪也很敏感，所以它不是不愿意靠近，而是更需要安全感和舒适节奏。',
     basics: { '社交模式': '慢热、偏爱低压力关系', '情绪处理': '细腻、容易共情', '行动策略': '更喜欢先确认安全再动', '代表氛围': '柔软、安静、需要安心感' },
     desc: '你像兔子的地方，在于你很容易感受到别人没说出口的东西，也很容易被环境氛围影响。你不是不想靠近人，而是你通常更需要一个安全、舒服、不被逼迫的节奏。\n\n你的温柔是很真实的，也很珍贵。很多人会觉得你细腻、体贴、相处起来没有攻击性。但你也容易因为太敏感、太容易共情，而让自己陷入反复想很多的状态。'
   },
   '黑猫': {
-    tag: '边界感王者',
-    emoji: '🐈‍⬛',
-    theme: ['#111827', '#a855f7'],
+    tag: '边界感王者', emoji: '🐈‍⬛', theme: ['#111827', '#a855f7'],
     intro: '黑猫很有边界感，也很有气场。它不是时时刻刻都高调，但它会用自己的方式告诉别人：我有自己的节奏、自己的判断，不是谁都能轻易打乱。',
     basics: { '社交模式': '偏独立，不做无效热络', '情绪处理': '理性、克制、先分对错', '行动策略': '一旦决定就会精准出手', '代表氛围': '冷感、清醒、有锋利感' },
     desc: '你像黑猫的地方，在于你不喜欢被随便靠近，也不喜欢被强行定义。你通常更相信自己的判断，也很清楚自己不想要什么。比起热热闹闹地融入所有人，你更在意这个人、这件事，到底值不值得你花精力。\n\n你的吸引力来自边界感。别人会觉得你有点冷、有点难接近，但也正因为这样，你的存在感很强。你不是不在乎，只是不会轻易把在乎暴露给所有人。'
   },
   '猫头鹰': {
-    tag: '理性观察',
-    emoji: '🦉',
-    theme: ['#64748b', '#7c3aed'],
+    tag: '理性观察', emoji: '🦉', theme: ['#64748b', '#7c3aed'],
     intro: '猫头鹰象征清醒、慢热和观察力。它不是最先冲出去的那个，却常常是最先想明白的人。它的存在感，来自安静里的判断力。',
     basics: { '社交模式': '偏独处、深交优先', '情绪处理': '理性拆解、看全局', '行动策略': '先观察，再落点', '代表氛围': '稳重、清醒、脑子一直在线' },
     desc: '你像猫头鹰的地方，在于你不会轻易被表面的情绪或热闹带跑。你习惯先观察、先分析、先判断，再决定自己要不要加入、要怎么表达。很多人可能觉得你慢热，但其实你只是更慎重。\n\n你的优势在于稳定和准确。你不是靠声量赢，而是靠判断赢。你容易给人一种“这个人是真的有在想”的感觉，这也是你很难被替代的地方。'
   }
 };
 
-const screens = {
-  intro: document.getElementById('intro'),
-  test: document.getElementById('test'),
-  loading: document.getElementById('loading'),
-  result: document.getElementById('result')
-};
+const screens = { intro: document.getElementById('intro'), test: document.getElementById('test'), loading: document.getElementById('loading'), result: document.getElementById('result') };
 const app = { answers: {}, index: 0 };
 const qList = document.getElementById('questionList');
 const pBar = document.getElementById('progressBar');
 const pText = document.getElementById('progressText');
+const answerWarning = document.getElementById('answerWarning');
 
-function show(name) {
-  Object.entries(screens).forEach(([k, v]) => v.classList.toggle('active', k === name));
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+function show(name) { Object.entries(screens).forEach(([k, v]) => v.classList.toggle('active', k === name)); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function setAnswerWarning(showWarning, message = '请先选择一个答案，再进入下一题。') { answerWarning.textContent = message; answerWarning.hidden = !showWarning; }
 
 function renderQuestions() {
+  setAnswerWarning(false);
   qList.innerHTML = '';
   questions.forEach((q, idx) => {
     const el = document.createElement('article');
@@ -246,6 +228,7 @@ function renderQuestions() {
   });
   qList.querySelectorAll('input').forEach(input => input.addEventListener('click', e => {
     app.answers[Number(e.target.name.slice(1))] = Number(e.target.value);
+    setAnswerWarning(false);
     updateProgress();
     if (app.index < questions.length - 1) setTimeout(() => { app.index += 1; renderQuestions(); }, 220);
   }));
@@ -258,58 +241,26 @@ function updateProgress() {
   pBar.style.width = `${done / total * 100}%`;
   pText.textContent = `${done} / ${total}`;
   document.getElementById('prevBtn').hidden = app.index === 0;
-  const answered = app.answers[app.index] !== undefined;
   const next = document.getElementById('nextBtn');
   const submit = document.getElementById('submitBtn');
-  next.disabled = !answered;
-  if (app.index === total - 1) {
-    next.style.display = 'none'; submit.style.display = 'inline-flex'; submit.disabled = done < total;
-  } else {
-    next.style.display = 'inline-flex'; submit.style.display = 'none';
-  }
+  if (app.index === total - 1) { next.style.display = 'none'; submit.style.display = 'inline-flex'; }
+  else { next.style.display = 'inline-flex'; submit.style.display = 'none'; }
 }
 
 function computeResultName() {
   const score = { outer:0, inner:0, feel:0, logic:0, active:0, observe:0 };
-  questions.forEach((q, idx) => {
-    const a = app.answers[idx];
-    if (a === undefined) return;
-    const key = q.options[a][1];
-    score[key] += 1;
-  });
+  questions.forEach((q, idx) => { const a = app.answers[idx]; if (a === undefined) return; score[q.options[a][1]] += 1; });
   const social = score.outer > score.inner ? 'outer' : 'inner';
   const emotion = score.feel > score.logic ? 'feel' : 'logic';
   const action = score.active > score.observe ? 'active' : 'observe';
   return resultMap[`${social}-${emotion}-${action}`];
 }
-
-function renderBasics(basics) {
-  const grid = document.getElementById('basicGrid');
-  grid.innerHTML = Object.entries(basics).map(([label, value]) => `<div class="basic-item"><div class="basic-label">${label}</div><div class="basic-value">${value}</div></div>`).join('');
-}
-
+function renderBasics(basics) { document.getElementById('basicGrid').innerHTML = Object.entries(basics).map(([label, value]) => `<div class="basic-item"><div class="basic-label">${label}</div><div class="basic-value">${value}</div></div>`).join(''); }
 function buildAnimalSvg(name, tag, colors, emoji) {
   const [c1, c2] = colors;
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720">
-    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${c1}" /><stop offset="100%" stop-color="${c2}" /></linearGradient></defs>
-    <rect width="960" height="720" rx="42" fill="url(#g)" />
-    <circle cx="140" cy="120" r="170" fill="rgba(255,255,255,.18)" />
-    <circle cx="790" cy="120" r="140" fill="rgba(255,255,255,.12)" />
-    <circle cx="740" cy="520" r="180" fill="rgba(255,255,255,.08)" />
-    <circle cx="255" cy="380" r="130" fill="rgba(255,255,255,.20)" />
-    <circle cx="255" cy="380" r="104" fill="rgba(255,255,255,.95)" />
-    <text x="255" y="414" text-anchor="middle" font-size="92" font-weight="700" font-family="Apple Color Emoji, Segoe UI Emoji, PingFang SC, Microsoft YaHei, sans-serif">${emoji}</text>
-    <text x="408" y="320" font-size="86" font-weight="800" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="white">${name}</text>
-    <text x="410" y="382" font-size="34" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.94)">${tag}</text>
-    <rect x="408" y="436" width="294" height="54" rx="27" fill="rgba(255,255,255,.18)" />
-    <text x="442" y="471" font-size="25" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.96)">前端动物图卡素材</text>
-    <text x="60" y="85" font-size="24" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.96)">《你的动物人格测试》</text>
-    <text x="60" y="654" font-size="24" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.9)">结果页联调版 · 可替换为正式动物插画</text>
-  </svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${c1}" /><stop offset="100%" stop-color="${c2}" /></linearGradient></defs><rect width="960" height="720" rx="42" fill="url(#g)" /><circle cx="140" cy="120" r="170" fill="rgba(255,255,255,.18)" /><circle cx="790" cy="120" r="140" fill="rgba(255,255,255,.12)" /><circle cx="740" cy="520" r="180" fill="rgba(255,255,255,.08)" /><circle cx="255" cy="380" r="130" fill="rgba(255,255,255,.20)" /><circle cx="255" cy="380" r="104" fill="rgba(255,255,255,.95)" /><text x="255" y="414" text-anchor="middle" font-size="92" font-weight="700" font-family="Apple Color Emoji, Segoe UI Emoji, PingFang SC, Microsoft YaHei, sans-serif">${emoji}</text><text x="408" y="320" font-size="86" font-weight="800" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="white">${name}</text><text x="410" y="382" font-size="34" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.94)">${tag}</text><rect x="408" y="436" width="294" height="54" rx="27" fill="rgba(255,255,255,.18)" /><text x="442" y="471" font-size="25" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.96)">前端动物图卡素材</text><text x="60" y="85" font-size="24" font-weight="700" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.96)">《你的动物人格测试》</text><text x="60" y="654" font-size="24" font-family="PingFang SC, Microsoft YaHei, sans-serif" fill="rgba(255,255,255,.9)">结果页联调版 · 可替换为正式动物插画</text></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
-
 function renderResult() {
   const winner = computeResultName();
   const result = results[winner];
@@ -318,30 +269,36 @@ function renderResult() {
   document.getElementById('resultImage').src = buildAnimalSvg(winner, result.tag, result.theme, result.emoji);
   document.getElementById('resultImage').alt = winner + ' 图卡素材';
   renderBasics(result.basics);
+  document.getElementById('shareBtn').dataset.result = winner;
   show('result');
 }
-
-function startTest() {
-  app.answers = {}; app.index = 0; renderQuestions(); show('test');
+async function shareResult() {
+  const winner = document.getElementById('shareBtn').dataset.result || computeResultName();
+  const shareTitle = `我测出了${winner}｜你的动物人格测试`;
+  const shareText = `我在《你的动物人格测试》里测出了${winner}，快来测测你是哪一种动物人格。`;
+  const shareUrl = window.location.href;
+  try {
+    if (navigator.share) { await navigator.share({ title: shareTitle, text: shareText, url: shareUrl }); return; }
+    if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(`${shareTitle}\n${shareText}\n${shareUrl}`); alert('结果链接已复制，快去分享给朋友吧～'); return; }
+  } catch (error) { if (error?.name === 'AbortError') return; }
+  window.prompt('复制下面的链接分享给朋友：', shareUrl);
 }
+function startTest() { app.answers = {}; app.index = 0; renderQuestions(); show('test'); }
 
 document.getElementById('startBtn').addEventListener('click', startTest);
-document.getElementById('backHomeBtn').addEventListener('click', () => {
-  if (!Object.keys(app.answers).length || confirm('当前答题进度会丢失，确认返回主页吗？')) location.href='../../index.html';
-});
-document.getElementById('prevBtn').addEventListener('click', () => { if (app.index > 0) { app.index -= 1; renderQuestions(); } });
-document.getElementById('nextBtn').addEventListener('click', () => { if (app.index < questions.length - 1) { app.index += 1; renderQuestions(); } });
+document.getElementById('backHomeBtn').addEventListener('click', () => { if (!Object.keys(app.answers).length || confirm('当前答题进度会丢失，确认返回主页吗？')) location.href='../../index.html'; });
+document.getElementById('prevBtn').addEventListener('click', () => { setAnswerWarning(false); if (app.index > 0) { app.index -= 1; renderQuestions(); } });
+document.getElementById('nextBtn').addEventListener('click', () => { if (app.answers[app.index] === undefined) { setAnswerWarning(true); return; } if (app.index < questions.length - 1) { setAnswerWarning(false); app.index += 1; renderQuestions(); } });
 document.getElementById('submitBtn').addEventListener('click', () => {
+  if (app.answers[app.index] === undefined || Object.keys(app.answers).length < questions.length) { setAnswerWarning(true, '请先完成当前题目，全部作答后再查看结果。'); return; }
   show('loading');
   const logs = ['整理你的社交能量、情绪处理和行动策略中…','比对最接近的动物人格中…','装载图卡与结果解释中…'];
   const text = document.getElementById('loadingText');
   let i = 0;
-  const timer = setInterval(() => {
-    if (i < logs.length) text.textContent = logs[i++];
-    else { clearInterval(timer); renderResult(); }
-  }, 560);
+  const timer = setInterval(() => { if (i < logs.length) text.textContent = logs[i++]; else { clearInterval(timer); renderResult(); } }, 560);
 });
 document.getElementById('restartBtn').addEventListener('click', startTest);
+document.getElementById('shareBtn').addEventListener('click', shareResult);
 </script>
 </body>
 </html>
