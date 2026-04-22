@@ -63,6 +63,7 @@
     .btn-primary{background:linear-gradient(100deg,#7c3aed,#8b5cf6 40%,#ec4899 100%);color:#fff;box-shadow:0 12px 28px rgba(139,92,246,.18)}
     .btn-secondary{background:#fff;color:var(--accent);border:1px solid var(--line)}
     .hint{font-size:13px;color:var(--muted);line-height:1.8}
+    .answer-warning{flex-basis:100%;font-size:13px;color:#e11d48;font-weight:800;line-height:1.7}
     .spinner{display:inline-block;width:44px;height:44px;border:4px solid #ece4f8;border-radius:50%;border-top-color:var(--accent);animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .loading-wrap{text-align:center;padding:72px 20px}.loading-wrap h2{margin:22px 0 0;font-size:22px}.loading-wrap p{margin-top:10px;color:var(--muted);font-size:14px}
@@ -119,8 +120,9 @@
           <button id="backHomeBtn" class="btn btn-secondary" type="button">返回主页</button>
           <button id="prevBtn" class="btn btn-secondary" type="button" hidden>上一题</button>
           <div style="flex:1"></div>
-          <button id="nextBtn" class="btn btn-secondary" type="button" disabled>下一题</button>
-          <button id="submitBtn" class="btn btn-primary" type="button" style="display:none" disabled>查看结果</button>
+          <div id="answerWarning" class="answer-warning" hidden>请先选择一个答案，再进入下一题。</div>
+          <button id="nextBtn" class="btn btn-secondary" type="button">下一题</button>
+          <button id="submitBtn" class="btn btn-primary" type="button" style="display:none">查看结果</button>
         </div>
       </div>
     </section>
@@ -156,6 +158,7 @@
         <div class="note">说明：本测试主要用于娱乐与自我观察，不替代专业心理评估。结果越像你，越说明你在关系压力之下的默认反应越稳定。</div>
         <div class="result-actions">
           <button id="restartBtn" class="btn btn-secondary" type="button">重新测试</button>
+          <button id="shareBtn" class="btn btn-secondary" type="button">分享给朋友</button>
           <a class="btn btn-primary" href="../../index.html" style="text-decoration:none">返回测试主页</a>
         </div>
       </div>
@@ -218,13 +221,19 @@
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     const questionList = document.getElementById('questionList');
+    const answerWarning = document.getElementById('answerWarning');
 
     function showScreen(name) {
       Object.entries(screens).forEach(([k, el]) => el.classList.toggle('active', k === name));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    function setAnswerWarning(showWarning, message = '请先选择一个答案，再进入下一题。') {
+      answerWarning.textContent = message;
+      answerWarning.hidden = !showWarning;
+    }
 
     function renderQuestions(direction = 'forward') {
+      setAnswerWarning(false);
       questionList.innerHTML = '';
       questions.forEach((q, index) => {
         const card = document.createElement('article');
@@ -252,6 +261,7 @@
         input.addEventListener('click', (e) => {
           const id = Number(e.target.name.replace('q',''));
           app.answers[id] = e.target.value;
+          setAnswerWarning(false);
           updateProgress();
           if (app.jumping) return;
           app.jumping = true;
@@ -275,14 +285,11 @@
       progressBar.style.width = `${(done / total) * 100}%`;
       progressText.textContent = `${done} / ${total}`;
       document.getElementById('prevBtn').hidden = app.currentIndex === 0;
-      const currentAnswered = !!app.answers[questions[app.currentIndex].id];
       const nextBtn = document.getElementById('nextBtn');
       const submitBtn = document.getElementById('submitBtn');
-      nextBtn.disabled = !currentAnswered;
       if (app.currentIndex === total - 1) {
         nextBtn.style.display = 'none';
         submitBtn.style.display = 'inline-flex';
-        submitBtn.disabled = done < total;
       } else {
         nextBtn.style.display = 'inline-flex';
         submitBtn.style.display = 'none';
@@ -319,7 +326,20 @@
       document.getElementById('dimExp').textContent = `得分 ${exp.score}/16 · 判定 ${exp.label}`;
       document.getElementById('dimRel').textContent = `得分 ${rel.score}/16 · 判定 ${rel.label}`;
       document.getElementById('dimCop').textContent = `得分 ${cop.score}/16 · 判定 ${cop.label}`;
+      document.getElementById('shareBtn').dataset.result = result.name;
       showScreen('result');
+    }
+
+    async function shareResult() {
+      const winner = document.getElementById('shareBtn').dataset.result || '你的人际求生模式';
+      const shareTitle = `我测出了${winner}｜你的人际求生模式测试`;
+      const shareText = `我在《你的人际求生模式测试》里测出了${winner}，快来看看你默认开启的是哪套关系求生系统。`;
+      const shareUrl = window.location.href;
+      try {
+        if (navigator.share) { await navigator.share({ title: shareTitle, text: shareText, url: shareUrl }); return; }
+        if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(`${shareTitle}\n${shareText}\n${shareUrl}`); alert('结果链接已复制，快去分享给朋友吧～'); return; }
+      } catch (error) { if (error?.name === 'AbortError') return; }
+      window.prompt('复制下面的链接分享给朋友：', shareUrl);
     }
 
     function startTest() {
@@ -336,12 +356,20 @@
       }
     });
     document.getElementById('prevBtn').addEventListener('click', () => {
+      setAnswerWarning(false);
       if (app.currentIndex > 0) { app.currentIndex -= 1; renderQuestions('back'); }
     });
     document.getElementById('nextBtn').addEventListener('click', () => {
-      if (app.currentIndex < questions.length - 1) { app.currentIndex += 1; renderQuestions('forward'); }
+      const currentId = questions[app.currentIndex].id;
+      if (!app.answers[currentId]) { setAnswerWarning(true); return; }
+      if (app.currentIndex < questions.length - 1) { setAnswerWarning(false); app.currentIndex += 1; renderQuestions('forward'); }
     });
     document.getElementById('submitBtn').addEventListener('click', () => {
+      const currentId = questions[app.currentIndex].id;
+      if (!app.answers[currentId] || Object.keys(app.answers).length < questions.length) {
+        setAnswerWarning(true, '请先完成当前题目，全部作答后再查看结果。');
+        return;
+      }
       showScreen('loading');
       const logs = ['读取关系压力反应…', '定位默认自保策略…', '生成人际求生结果…'];
       const text = document.getElementById('loadingText');
@@ -352,6 +380,7 @@
       }, 520);
     });
     document.getElementById('restartBtn').addEventListener('click', startTest);
+    document.getElementById('shareBtn').addEventListener('click', shareResult);
   </script>
 </body>
 </html>
