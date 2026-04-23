@@ -54,7 +54,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      min-width: 132px;
+      min-width: 152px;
       padding: 12px 18px;
       border: 0;
       border-radius: 999px;
@@ -92,7 +92,7 @@
 <body>
   <iframe id="quizFrame" src="./yirenzhixia_real_images_fixed_v6.html" title="一人之下角色测试"></iframe>
   <div id="toast" aria-live="polite"></div>
-  <button id="shareBtn" type="button">分享给朋友</button>
+  <button id="shareBtn" type="button">复制链接分享</button>
 
   <script>
     const iframe = document.getElementById('quizFrame');
@@ -102,13 +102,13 @@
     let iframeDoc = null;
     let toastTimer = null;
 
-    function showToast(message) {
+    function showToast(message, duration = 2200) {
       toast.textContent = message;
       toast.classList.add('show');
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => {
         toast.classList.remove('show');
-      }, 1800);
+      }, duration);
     }
 
     function getFrameWindow() {
@@ -213,28 +213,13 @@
     }
 
     async function sharePage() {
-      const shareData = {
-        title: iframeDoc && iframeDoc.title ? iframeDoc.title : '一人之下角色测试',
-        text: '我刚做完《一人之下》角色测试，来看看你最像哪位角色。',
-        url: window.location.href
-      };
-
-      if (navigator.share) {
-        try {
-          await navigator.share(shareData);
-          return;
-        } catch (error) {
-          if (error && error.name === 'AbortError') {
-            return;
-          }
-        }
-      }
+      const shareUrl = window.location.href;
 
       try {
-        await navigator.clipboard.writeText(shareData.url);
-        showToast('链接已复制，快发给朋友吧');
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('链接已复制，请直接粘贴发送给朋友；发朋友圈请用右上角菜单', 2800);
       } catch (error) {
-        showToast('分享失败，请手动复制当前链接');
+        showToast('复制失败，请手动复制当前链接');
       }
     }
 
